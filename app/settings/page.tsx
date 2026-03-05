@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import Link from 'next/link';
 
@@ -53,6 +53,22 @@ export default function SettingsPage() {
   const [fbTestResult, setFbTestResult] = useState<'ok' | 'fail' | null>(null);
   const [testingAi, setTestingAi] = useState(false);
   const [aiTestResult, setAiTestResult] = useState<'ok' | 'fail' | null>(null);
+  const [youtubeChannelId, setYoutubeChannelId] = useState('');
+  const [googleClientId, setGoogleClientId] = useState('');
+  const [googleClientSecretSet, setGoogleClientSecretSet] = useState(false);
+  const [anthropicKeySet, setAnthropicKeySet] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/config')
+      .then((r) => r.json())
+      .then((d) => {
+        setYoutubeChannelId(d.youtubeChannelId ?? '');
+        setGoogleClientId(d.googleClientId ?? '');
+        setGoogleClientSecretSet(!!d.googleClientSecretSet);
+        setAnthropicKeySet(!!d.anthropicKeySet);
+      })
+      .catch(() => {});
+  }, []);
 
   const testFacebook = async () => {
     setTestingFb(true);
@@ -137,17 +153,23 @@ export default function SettingsPage() {
             </button>
           )}
 
-          <div className="border-t border-[#1a1a1a] pt-4 mt-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs text-gray-400">YouTube Channel ID</label>
-              <input
-                type="text"
-                readOnly
-                placeholder="YOUTUBE_CHANNEL_ID (set via env var)"
-                className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2 text-sm text-gray-300 font-mono placeholder-gray-600 focus:outline-none cursor-not-allowed"
-              />
-              <p className="text-xs text-gray-600">Set YOUTUBE_CHANNEL_ID in your Vercel environment variables.</p>
-            </div>
+          <div className="border-t border-[#1a1a1a] pt-4 mt-4 space-y-3">
+            <InputRow
+              label="Google Client ID"
+              value={googleClientId}
+              placeholder="GOOGLE_CLIENT_ID"
+            />
+            <InputRow
+              label="Google Client Secret"
+              value={googleClientSecretSet ? '••••••••••••••••••••••••' : ''}
+              placeholder="GOOGLE_CLIENT_SECRET"
+              type="text"
+            />
+            <InputRow
+              label="YouTube Channel ID"
+              value={youtubeChannelId}
+              placeholder="YOUTUBE_CHANNEL_ID"
+            />
           </div>
 
           <div className="bg-[#1a1a1a] rounded-lg p-4 mt-2">
@@ -240,9 +262,9 @@ export default function SettingsPage() {
 
           <InputRow
             label="Anthropic API Key"
-            value=""
+            value={anthropicKeySet ? '••••••••••••••••••••••••' : ''}
             placeholder="ANTHROPIC_API_KEY"
-            type="password"
+            type="text"
           />
 
           <button
